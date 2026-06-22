@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "qcblock",
+  "version": "${version}",
+  "name": "Quick Command Blocks",
+  "description": "Paste one line of qcb script to auto-create chained command blocks. /qcb dir=forward down=2; r: command; c: command",
+  "authors": ["Akpew"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/qcblock/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.akpew.minecraft.qcblock.QcblockMod"
+    ]
+  },
+  "mixins": [
+    "qcblock.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "~26.1.2",
+    "java": ">=25"
+  }
+}

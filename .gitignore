@@ -1,0 +1,20 @@
+# Gradle / build outputs
+build/
+.gradle/
+
+# Locally vendored dependency jars (resolved from Maven when absent)
+dependencies/
+
+# Dev run directory
+run/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.ipr
+*.iws
+
+# OS / logs
+*.log
+.DS_Store

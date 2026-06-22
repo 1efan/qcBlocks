@@ -1,0 +1,6 @@
+{
+  "command.qcb.usage": "§6/qcb §f<script>  —  paste one line to create chained command blocks",
+  "command.qcb.placed": "§aqcb: placed %d command block%s §7[start %s, chain %s]",
+  "command.qcb.error.no_commands": "§cqcb: no commands found in the script.",
+  "command.qcb.error.player_only": "§cqcb: only players can run this command."
+}

@@ -1,0 +1,114 @@
+plugins {
+    id "net.fabricmc.fabric-loom" version "1.16.2"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+java {
+    withSourcesJar()
+
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "Fabric"
+        url = "https://maven.fabricmc.net/"
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    def localDependencyJars = fileTree(dir: "dependencies", include: ["*.jar"])
+    if (!localDependencyJars.files.isEmpty()) {
+        implementation files(localDependencyJars.files)
+        implementation fileTree(dir: layout.buildDirectory.dir("extracted-fabric-api").get().asFile, include: ["*.jar"])
+    } else {
+        implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    }
+}
+
+def localFabricApiJars = fileTree(dir: "dependencies", include: ["fabric-api-*.jar"])
+def extractLocalFabricApi = tasks.register("extractLocalFabricApi", Copy) {
+    group = "build setup"
+    description = "Extracts nested Fabric API module jars from ./dependencies for local compilation."
+
+    into(layout.buildDirectory.dir("extracted-fabric-api"))
+    localFabricApiJars.files.each { jarFile ->
+        from(zipTree(jarFile)) {
+            include "META-INF/jars/*.jar"
+            eachFile { fileCopyDetails ->
+                fileCopyDetails.path = fileCopyDetails.name
+            }
+            includeEmptyDirs = false
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    dependsOn(extractLocalFabricApi)
+    options.encoding = "UTF-8"
+    options.release = 25
+    options.compilerArgs.add("-Xlint:deprecation")
+}
+
+def assertMinecraftGameNotRunning = {
+    if (!System.getProperty("os.name").toLowerCase().contains("windows")) {
+        return
+    }
+
+    def command = "\$ErrorActionPreference='SilentlyContinue'; " +
+        "Get-CimInstance Win32_Process -Filter \"name='java.exe' OR name='javaw.exe'\" | " +
+        "Where-Object { \$_.CommandLine -match 'net\\.fabricmc\\.loader|knot\\.KnotClient|minecraft\\.client\\.main\\.Main' -and \$_.CommandLine -notmatch 'gradle' } | " +
+        "Select-Object -First 1 -ExpandProperty ProcessId"
+    def process = new ProcessBuilder("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command)
+        .redirectErrorStream(true)
+        .start()
+    process.waitFor()
+
+    def pid = process.inputStream.getText("UTF-8").trim()
+    if (!pid.isEmpty()) {
+        throw new GradleException("Minecraft appears to be running as Java process ${pid}. Close the game before deploying to .minecraft/mods.")
+    }
+}
+
+tasks.register("deployToMinecraftMods", Copy) {
+    group = "build"
+    description = "Copies the built qcblock jar and Fabric API jar into the local .minecraft/mods folder."
+
+    dependsOn(tasks.named("assemble"))
+    doFirst(assertMinecraftGameNotRunning)
+
+    def minecraftModsDir = providers.environmentVariable("APPDATA")
+        .map { appData -> file("${appData}/.minecraft/mods") }
+        .orElse(file("${System.getProperty("user.home")}/AppData/Roaming/.minecraft/mods"))
+
+    into(minecraftModsDir)
+    from(layout.buildDirectory.dir("libs")) {
+        include "*.jar"
+        exclude "*-dev.jar"
+        exclude "*-sources.jar"
+    }
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
