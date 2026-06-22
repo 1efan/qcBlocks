@@ -10,7 +10,7 @@
 
 ## What it does
 
-Quick Command Blocks adds a single command — `/qcb` — that turns one line of script into a ready-made chain of pre-filled command blocks. No manually placing blocks, setting repeat/chain modes, or typing into each one.
+Quick Command Blocks adds a single command - `/qcb` - that turns one line of script into a ready-made chain of pre-filled command blocks. No manually placing blocks, setting repeat/chain modes, or typing into each one.
 
 ```
 /qcb dir=forward down=2; r: <command>; c: <command>; c: <command>

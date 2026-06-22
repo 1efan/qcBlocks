@@ -40,8 +40,6 @@ public final class QcbCommand {
                 .executes(QcbCommand::execute)));
     }
 
-    // ── Data holders ──────────────────────────────────────────────
-
     private enum BlockKind { REPEAT, CHAIN, IMPULSE }
 
     private static class ParsedStatement {
@@ -58,8 +56,6 @@ public final class QcbCommand {
         }
     }
 
-    // ── Execute ───────────────────────────────────────────────────
-
     private static int execute(CommandContext<CommandSourceStack> ctx) {
         CommandSourceStack source = ctx.getSource();
         ServerPlayer player = source.getPlayer();
@@ -72,20 +68,16 @@ public final class QcbCommand {
         ServerLevel world = source.getLevel();
 
         try {
-            // ── 1. Parse header ──────────────────────────────
             HeaderResult header = parseHeader(raw, player);
 
-            // ── 2. Parse statements ─────────────────────────
             List<ParsedStatement> statements = parseStatements(header.remainingScript);
             if (statements.isEmpty()) {
                 source.sendFailure(Component.literal("§cqcb: no commands found in the script."));
                 return 0;
             }
 
-            // ── 3. Calculate positions ──────────────────────
             List<BlockPos> positions = computePositions(player, header, statements.size());
 
-            // ── 4. Place command blocks ─────────────────────
             placeBlocks(world, positions, statements, header.chainDirection);
 
             source.sendSuccess(() -> Component.literal(String.format(
@@ -104,8 +96,6 @@ public final class QcbCommand {
         }
     }
 
-    // ── Header parsing ────────────────────────────────────────────
-
     private static class HeaderResult {
         Direction chainDirection = Direction.NORTH;
         final Map<String, Integer> offsets = new HashMap<>();
@@ -115,13 +105,11 @@ public final class QcbCommand {
     private static HeaderResult parseHeader(String raw, ServerPlayer player) {
         HeaderResult result = new HeaderResult();
 
-        // Defaults
         result.chainDirection = relativeDirection(player, "forward");
         result.offsets.put("forward", 1);
 
         String working = raw.trim();
 
-        // Find where the header ends and statements begin
         int firstStmt = findFirstStatementStart(working);
         String headerStr;
         String body;
@@ -163,7 +151,6 @@ public final class QcbCommand {
             }
         }
 
-        // If dir wasn't explicitly set, infer it from a directional offset
         if (!dirExplicitlySet) {
             for (String d : new String[]{"forward", "back", "left", "right",
                                           "north", "south", "east", "west"}) {
@@ -186,8 +173,6 @@ public final class QcbCommand {
         }
         return -1;
     }
-
-    // ── Statement parsing ─────────────────────────────────────────
 
     private static List<ParsedStatement> parseStatements(String body) {
         List<ParsedStatement> list = new ArrayList<>();
@@ -236,14 +221,13 @@ public final class QcbCommand {
                     switch (flag) {
                         case "cond", "conditional" -> conditional = true;
                         case "needs", "needsredstone", "redstone" -> needsRedstone = true;
-                        case "auto", "always" -> { /* explicitly always active — default */ }
+                        case "auto", "always" -> { }
                         default -> throw new IllegalArgumentException(
                             "unknown flag '" + flag + "' (valid: cond, needs, auto)");
                     }
                 }
             }
 
-            // Impulse defaults to needs-redstone; repeat/chain default to always-active
             if (kind == BlockKind.IMPULSE && flagsStr == null) {
                 needsRedstone = true;
             }
@@ -251,12 +235,9 @@ public final class QcbCommand {
             return new ParsedStatement(kind, conditional, needsRedstone, command);
         }
 
-        // No prefix — bare command.  First → repeat, rest → chain (all always-active).
         BlockKind kind = isFirst ? BlockKind.REPEAT : BlockKind.CHAIN;
         return new ParsedStatement(kind, false, false, text.trim());
     }
-
-    // ── Position calculation ──────────────────────────────────────
 
     private static List<BlockPos> computePositions(ServerPlayer player,
                                                     HeaderResult header, int count) {
@@ -267,7 +248,6 @@ public final class QcbCommand {
         int y = playerPos.getY();
         int z = playerPos.getZ();
 
-        // Apply all offsets
         for (Map.Entry<String, Integer> entry : header.offsets.entrySet()) {
             Direction dir = resolveDirection(entry.getKey(), player);
             int amount = entry.getValue();
@@ -289,21 +269,17 @@ public final class QcbCommand {
         return positions;
     }
 
-    // ── Block placement ───────────────────────────────────────────
-
     private static void placeBlocks(ServerLevel world, List<BlockPos> positions,
                                      List<ParsedStatement> statements, Direction facing) {
         for (int i = 0; i < statements.size(); i++) {
             BlockPos pos = positions.get(i);
             ParsedStatement stmt = statements.get(i);
 
-            // Clear existing block
             BlockState existing = world.getBlockState(pos);
             if (!existing.isAir()) {
                 world.destroyBlock(pos, true);
             }
 
-            // Pick the right block
             Block block = switch (stmt.kind) {
                 case REPEAT -> Blocks.REPEATING_COMMAND_BLOCK;
                 case CHAIN -> Blocks.CHAIN_COMMAND_BLOCK;
@@ -316,7 +292,6 @@ public final class QcbCommand {
 
             world.setBlock(pos, state, Block.UPDATE_CLIENTS);
 
-            // Configure the block entity
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof CommandBlockEntity cmdBe) {
                 cmdBe.getCommandBlock().setCommand(stmt.command);
@@ -327,8 +302,6 @@ public final class QcbCommand {
             }
         }
     }
-
-    // ── Direction helpers ─────────────────────────────────────────
 
     private static Direction resolveDirection(String name, ServerPlayer player) {
         return switch (name.toLowerCase()) {
@@ -349,7 +322,6 @@ public final class QcbCommand {
     }
 
     private static Direction relativeDirection(ServerPlayer player, String relative) {
-        // Minecraft yaw: 0=south, 90=west, 180=north, 270=east
         float yaw = (player.getYRot() % 360 + 360) % 360;
 
         Direction facing;
