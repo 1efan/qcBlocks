@@ -6,6 +6,16 @@
   **Paste one line of `qcb` script to auto-create chained command blocks.**
 </div>
 
+<p align="center">
+  <a href="https://github.com/1efan/qcBlocks/releases"><img src="https://img.shields.io/github/v/release/1efan/qcBlocks?style=flat-square&color=blue" alt="Release"></a>
+  <a href="https://github.com/1efan/qcBlocks/blob/main/LICENSE"><img src="https://img.shields.io/github/license/1efan/qcBlocks?style=flat-square&color=green" alt="License"></a>
+  <a href="https://github.com/1efan/qcBlocks/issues"><img src="https://img.shields.io/github/issues/1efan/qcBlocks?style=flat-square" alt="Issues"></a>
+  <br>
+  <img src="https://img.shields.io/badge/Minecraft-26.1-62b543?style=flat-square" alt="Minecraft">
+  <img src="https://img.shields.io/badge/Fabric-0.18+-d5d5d5?style=flat-square" alt="Fabric">
+  <img src="https://img.shields.io/badge/Java-25+-orange?style=flat-square" alt="Java">
+</p>
+
 ---
 
 ## What it does
