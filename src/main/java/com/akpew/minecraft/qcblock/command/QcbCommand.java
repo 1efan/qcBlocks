@@ -36,10 +36,6 @@ public final class QcbCommand {
                 .executes(QcbCommand::execute)));
     }
 
-    // The command permission API differs across versions: 1.20.1/1.21.1 use
-    // CommandSourceStack.hasPermission(int); 26.1 replaced it with a PermissionCheck system
-    // (Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)). One shared source covers all three
-    // through reflection so the build that targets each version resolves the right call at runtime.
     @SuppressWarnings("unchecked")
     private static boolean canRun(CommandSourceStack source) {
         try {
@@ -47,7 +43,6 @@ public final class QcbCommand {
                 .getMethod("hasPermission", int.class)
                 .invoke(source, GAMEMASTER_LEVEL);
         } catch (ReflectiveOperationException olderApiMissing) {
-            // 26.1+ has no hasPermission(int); fall through to the permission-check API.
         }
 
         try {
