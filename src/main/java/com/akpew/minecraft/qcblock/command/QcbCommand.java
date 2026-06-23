@@ -33,11 +33,39 @@ public final class QcbCommand {
             register(dispatcher));
     }
 
+    private static final int GAMEMASTER_LEVEL = 2;
+
     private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("qcb")
-            .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+            .requires(QcbCommand::canRun)
             .then(Commands.argument("script", StringArgumentType.greedyString())
                 .executes(QcbCommand::execute)));
+    }
+
+    // The command permission API differs across versions: 1.20.1/1.21.1 use
+    // CommandSourceStack.hasPermission(int); 26.1 replaced it with a PermissionCheck system
+    // (Commands.hasPermission(Commands.LEVEL_GAMEMASTERS)). One shared source covers all three
+    // through reflection so the build that targets each version resolves the right call at runtime.
+    @SuppressWarnings("unchecked")
+    private static boolean canRun(CommandSourceStack source) {
+        try {
+            return (boolean) CommandSourceStack.class
+                .getMethod("hasPermission", int.class)
+                .invoke(source, GAMEMASTER_LEVEL);
+        } catch (ReflectiveOperationException olderApiMissing) {
+            // 26.1+ has no hasPermission(int); fall through to the permission-check API.
+        }
+
+        try {
+            java.lang.reflect.Field levelField = Commands.class.getField("LEVEL_GAMEMASTERS");
+            Object level = levelField.get(null);
+            Object predicate = Commands.class
+                .getMethod("hasPermission", levelField.getType())
+                .invoke(null, level);
+            return ((java.util.function.Predicate<CommandSourceStack>) predicate).test(source);
+        } catch (ReflectiveOperationException newerApiMissing) {
+            return false;
+        }
     }
 
     private enum BlockKind { REPEAT, CHAIN, IMPULSE }
@@ -117,8 +145,14 @@ public final class QcbCommand {
             headerStr = working.substring(0, firstStmt).trim();
             body = working.substring(firstStmt).trim();
         } else {
-            headerStr = working;
-            body = "";
+            int cmdStart = findUnprefixedCommandStart(working);
+            if (cmdStart >= 0) {
+                headerStr = working.substring(0, cmdStart).trim();
+                body = working.substring(cmdStart).trim();
+            } else {
+                headerStr = working;
+                body = "";
+            }
         }
 
         boolean dirExplicitlySet = false;
@@ -163,6 +197,28 @@ public final class QcbCommand {
 
         result.remainingScript = body;
         return result;
+    }
+
+    private static int findUnprefixedCommandStart(String header) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\S+").matcher(header);
+        while (m.find()) {
+            if (!isHeaderToken(m.group())) {
+                return m.start();
+            }
+        }
+        return -1;
+    }
+
+    private static boolean isHeaderToken(String token) {
+        if (token.indexOf('=') >= 0) {
+            return true;
+        }
+        return switch (token.toLowerCase()) {
+            case "forward", "forwards", "f", "back", "backwards", "b", "left", "l",
+                 "right", "r", "up", "u", "down", "d", "north", "n", "south", "s",
+                 "east", "e", "west", "w" -> true;
+            default -> false;
+        };
     }
 
     private static int findFirstStatementStart(String script) {
