@@ -1,0 +1,8 @@
+title: qcBlocks
+description: Paste one line of qcb script to auto-create chained command blocks.
+theme: jekyll-theme-cayman
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default

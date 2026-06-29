@@ -1,3 +1,5 @@
+---
+---
 # qcBlocks scripting reference
 
 This is the full guide to the `/qcb` script format. If you just want an AI to write

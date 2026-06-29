@@ -1,3 +1,5 @@
+---
+---
 # Using an AI to write qcBlocks scripts
 
 You can hand the whole `/qcb` format to an AI assistant (ChatGPT, Claude, Gemini, or
