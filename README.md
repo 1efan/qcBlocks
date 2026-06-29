@@ -35,6 +35,13 @@ Quick Command Blocks adds a single command - `/qcb` - that turns one line of scr
 
 Each `r:` / `c:` segment becomes the next block in the chain, in order.
 
+## Documentation
+
+- [Scripting reference](docs/SCRIPTING.md) covers the full script format: headers,
+  directions, block kinds, flags, shorthand, and worked examples.
+- [Using an AI to write scripts](docs/AI_PROMPT.md) is a prompt you can paste into
+  ChatGPT or Claude so it writes `/qcb` scripts from a plain-language request.
+
 ## Requirements
 
 | | |
