@@ -68,4 +68,4 @@ Requires JDK 25. (If `dependencies/` is empty, Fabric API is pulled from Maven a
 
 ## License
 
-[MIT](LICENSE) © Akpew
+[MIT](LICENSE) © 1efan
